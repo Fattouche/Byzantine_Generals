@@ -78,7 +78,7 @@ func (node Node) sendMessage(id int, faultyGenerals map[int]int) *Node {
 	if _, ok := faultyGenerals[node.id]; ok {
 		faultyGeneral = true
 	}
-	if id%2 == 0 && faultyGeneral {
+	if faultyGeneral {
 		order = oppositeOrder(node.inputValue)
 	} else {
 		order = node.inputValue
@@ -108,6 +108,10 @@ func (node *Node) decide() string {
 			decisions[decision] = 1
 		}
 	}
+	/*fmt.Println()
+	fmt.Println(node.processIDs)
+	fmt.Println(decisions)
+	fmt.Println()*/
 	// Get the majority vote from this nodes children and assign it to the output value.
 	node.outputValue = majorityDecision(decisions)
 	return node.outputValue
@@ -141,6 +145,8 @@ func byzantineGenerals(numGenerals, numFaultyGenerals int, order string) {
 	if faultyIndexes[0] == 1 {
 		fmt.Println("Commander is faulty")
 	}
+	//faultyIndexes = map[int]int{5: 1, 6: 1}
+
 	queue := []*Node{commander}
 
 	currDepth := 0
@@ -152,22 +158,24 @@ func byzantineGenerals(numGenerals, numFaultyGenerals int, order string) {
 	for len(queue) > 0 {
 		node := queue[0]
 		queue = queue[1:]
-		nextElemDepth += numGenerals
+		nextElemDepth += numGenerals - currDepth
 		elemDepth--
 		if elemDepth == 0 {
 			currDepth++
-			if currDepth > numFaultyGenerals {
+			if currDepth >= numFaultyGenerals {
 				break
 			}
 			elemDepth = nextElemDepth
 			nextElemDepth = 0
 		}
+		//fmt.Println("NODE: ", node.processIDs, node.inputValue)
 		// Iterate through each general and send the message, add to end of BFS queue.
 		for i := 1; i < numGenerals; i++ {
 			childNode := node.sendMessage(i, faultyIndexes)
 			if childNode == nil {
 				continue
 			}
+			//fmt.Println("Child Node and input value", childNode.processIDs, childNode.inputValue)
 			node.children = append(node.children, childNode)
 			queue = append(queue, childNode)
 		}
