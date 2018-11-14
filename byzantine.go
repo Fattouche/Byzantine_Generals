@@ -71,19 +71,24 @@ func oppositeOrder(order string) string {
 // It will then add the recieivng node as one of its children which will be used later in the decision.
 func (node Node) sendMessage(id int, faultyGenerals map[int]int) *Node {
 	var order string
+	// If this general has already recieved a message from us, don't send.
 	if _, ok := node.processIDs[id]; ok {
 		return nil
 	}
 	faultyGeneral := false
+	// Check if the general sending the node is faulty
 	if _, ok := faultyGenerals[node.id]; ok {
 		faultyGeneral = true
 	}
 	if faultyGeneral {
+		// if faulty, change the order given i%2==0
 		order = oppositeOrder(node.inputValue)
 	} else {
+		// else send order as is
 		order = node.inputValue
 	}
 	processIDs := make(map[int]int)
+	// send them all the process id's we have too
 	for k, v := range node.processIDs {
 		processIDs[k] = v
 	}
@@ -108,10 +113,6 @@ func (node *Node) decide() string {
 			decisions[decision] = 1
 		}
 	}
-	/*fmt.Println()
-	fmt.Println(node.processIDs)
-	fmt.Println(decisions)
-	fmt.Println()*/
 	// Get the majority vote from this nodes children and assign it to the output value.
 	node.outputValue = majorityDecision(decisions)
 	return node.outputValue
@@ -145,6 +146,7 @@ func byzantineGenerals(numGenerals, numFaultyGenerals int, order string) {
 	if faultyIndexes[0] == 1 {
 		fmt.Println("Commander is faulty")
 	}
+	// Used for testing
 	//faultyIndexes = map[int]int{5: 1, 6: 1}
 
 	queue := []*Node{commander}
@@ -168,14 +170,13 @@ func byzantineGenerals(numGenerals, numFaultyGenerals int, order string) {
 			elemDepth = nextElemDepth
 			nextElemDepth = 0
 		}
-		//fmt.Println("NODE: ", node.processIDs, node.inputValue)
+
 		// Iterate through each general and send the message, add to end of BFS queue.
 		for i := 1; i < numGenerals; i++ {
 			childNode := node.sendMessage(i, faultyIndexes)
 			if childNode == nil {
 				continue
 			}
-			//fmt.Println("Child Node and input value", childNode.processIDs, childNode.inputValue)
 			node.children = append(node.children, childNode)
 			queue = append(queue, childNode)
 		}
